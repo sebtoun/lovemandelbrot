@@ -21,20 +21,19 @@ function love.load()
 		vec4 effect( vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords )
 		{
 			// compute complex number z=x+iy given pixel coordinates
-			float x0 = bounds.x + screen_coords.x / width * bounds.z;
-			float y0 = bounds.y + screen_coords.y / height * bounds.w;
-
-			float x = x0;
-			float y = y0;
+			vec2 z0 = vec2(bounds.x + screen_coords.x / width * bounds.z, bounds.y + screen_coords.y / height * bounds.w);
+			vec2 z = z0;
 			float i;
-			for (i = 0; x * x + y * y < 4 && i < maxIterations; i++)
+			for (i = 0; dot(z,z) < 4 && i < maxIterations; i++)
 			{
 				// z = z^2 + z0
-				float tmp = x * x - y * y + x0;
-				y = 2 * x * y + y0;
-				x = tmp;
+				z = vec2(z.x * z.x - z.y * z.y + z0.x, 2 * z.x * z.y + z0.y);
 			}
-			float c = (i - log(log(x*x + y*y) / (2 * log(2)))) / maxIterations;
+			// adds two iterations for color smoothing
+			z = vec2(z.x * z.x - z.y * z.y + z0.x, 2 * z.x * z.y + z0.y);
+			z = vec2(z.x * z.x - z.y * z.y + z0.x, 2 * z.x * z.y + z0.y);
+			
+			float c = (i + 1 - log(log(dot(z,z)) * 0.5) / log(2)) / maxIterations;
 
 			// lookup color in texture
 			return texture2D(texture, vec2(c * density, 0.5)) * (1 - step(maxIterations, i));
