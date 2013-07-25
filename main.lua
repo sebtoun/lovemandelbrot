@@ -8,7 +8,6 @@ scrollSpeed = 1
 nbColors = 6
 colorDensity = 6
 
-
 function love.load()
 	local source = [[
 		// CPU / GPU shared variables
@@ -35,24 +34,16 @@ function love.load()
 				y = 2 * x * y + y0;
 				x = tmp;
 			}
-			float c = i / maxIterations;
+			float c = (i - log(log(x*x + y*y) / (2 * log(2)))) / maxIterations;
+
 			// lookup color in texture
-			return texture2D(texture, vec2(c * density, 0.5));
+			return texture2D(texture, vec2(c * density, 0.5)) * (1 - step(maxIterations, i));
 		}
 	]]
 	effect = lg.newPixelEffect(source)
 	
 	-- color table texture generation
-	local colorTable = love.image.newImageData(nbColors, 1)
-	colorTable:mapPixel(
-	function (x, y, r, g, b, a)                
-		return 50 + math.random(51, 255),
-		50 + math.random(51, 255),
-		50 + math.random(51, 255),
-		255
-	end)
-	colors = lg.newImage(colorTable)          
-	colors:setWrap("repeat", "repeat")
+	generateColors()
 	-- send shared variables values to gpu
 	bounds = {-2.5, -1, 3.5, 2} -- {left, top, width, height} format. = complex plane [-2.5, 1] + i * [-1, 1]
 	maxIterations = 200
@@ -63,6 +54,19 @@ function love.load()
 	effect:send("maxIterations", maxIterations)
 	effect:send("density", colorDensity)
 	lg.setPixelEffect(effect)
+end
+
+function generateColors()
+	local colorTable = love.image.newImageData(nbColors, 1)
+	colorTable:mapPixel(
+	function (x, y, r, g, b, a)                
+		return 50 + math.random(51, 255),
+		50 + math.random(51, 255),
+		50 + math.random(51, 255),
+		255
+	end)
+	colors = lg.newImage(colorTable)          
+	colors:setWrap("repeat", "repeat")
 end
 
 function zoom(factor, mousex, mousey)
@@ -114,6 +118,12 @@ function love.update(dt) -- manage inputs
 	if updateBounds then effect:send("bounds", bounds) end
 	if updateIter then effect:send("maxIterations", maxIterations) end
 	lg.setCaption("iterations: " .. maxIterations .. " @" .. love.timer.getFPS() .. "fps")
+end
+
+function love.keypressed(key)
+	if key == "c" then
+		generateColors()
+	end
 end
 
 function love.draw()
