@@ -33,7 +33,7 @@ function love.load()
 			z = vec2(z.x * z.x - z.y * z.y + z0.x, 2 * z.x * z.y + z0.y);
 			z = vec2(z.x * z.x - z.y * z.y + z0.x, 2 * z.x * z.y + z0.y);
 			
-			float c = (i + 1 - log(log(dot(z,z)) * 0.5) / log(2)) / maxIterations;
+			float c = (i + 1 - log(log(dot(z,z)) * 0.5) / log(2.0)) / maxIterations;
 
 			// lookup color in texture
 			return texture2D(texture, vec2(c * density, 0.5)) * (1 - step(maxIterations, i));
